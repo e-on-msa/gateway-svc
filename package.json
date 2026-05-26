@@ -1,0 +1,24 @@
+{
+  "name": "gateway-svc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "connect-redis": "^9.0.0",
+    "cors": "^2.8.6",
+    "csurf": "^1.11.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "helmet": "^8.1.0",
+    "http-proxy-middleware": "^4.0.0",
+    "ioredis": "^5.10.1",
+    "passport": "^0.7.0"
+  }
+}
