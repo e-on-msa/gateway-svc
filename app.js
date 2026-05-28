@@ -7,16 +7,16 @@ const session = require("express-session");
 const passport = require("passport");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const RedisStore = require("connect-redis").default;
-const { createClient } = require("ioredis");
+const Redis = require("ioredis");
 
 require("./config/passport")(passport);
 
 const app = express();
 
 // ── Redis 클라이언트 설정 ──
-const redisClient = createClient({
+const redisClient = new Redis({
     host: process.env.REDIS_HOST || "redis",
-    port: process.env.REDIS_PORT || 6379,
+    port: parseInt(process.env.REDIS_PORT) || 6379,
 });
 
 // ── 보안 헤더 ──
@@ -72,19 +72,19 @@ const injectUser = (req, res, next) => {
 };
 
 app.use("/schoolSchedule", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8081", changeOrigin: true }));
+    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
 
 app.use("/averageSchedule", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8081", changeOrigin: true }));
+    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
 
 app.use("/regions", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8081", changeOrigin: true }));
+    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
 
 app.use("/mySchool", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8081", changeOrigin: true }));
+    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
 
 app.use("/api/user", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8082", changeOrigin: true }));
+    createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
 
 app.use("/boards", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.COMMUNITY_SVC_URL || "http://community-svc:8083", changeOrigin: true }));

@@ -1,5 +1,5 @@
 const localStrategy = require("./localStrategy");
-const { User } = require("../../models");
+const axios = require('axios');
 
 module.exports = (passport) => {
     passport.serializeUser((user, done) => {
@@ -9,23 +9,15 @@ module.exports = (passport) => {
     passport.deserializeUser(async (id, done) => {
         try {
             if (!id) return done(null, false);
-            const user = await User.findByPk(id, {
-                attributes: [
-                    "user_id",
-                    "name",
-                    "email",
-                    "age",
-                    "type",
-                    "state_code",
-                    "provider",
-                    "sns_id",
-                    "agreements",
-                    "email_notification",
-                ],
-            });
 
-            return done(null, user || false);
+            const res = await axios.get(
+                `${process.env.USER_SVC_URL}/internal/users/${id}`
+            );
+            return done(null, res.data || false);
         } catch (err) {
+            if (err.response?.status === 404) {
+                return done(null, false);
+            }
             return done(err);
         }
     });
