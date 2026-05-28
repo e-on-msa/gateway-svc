@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # 패키지 설치
-RUN npm install --production
+RUN npm install
 
 # 나머지 코드 전부 복사
 COPY . .
