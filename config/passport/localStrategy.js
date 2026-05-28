@@ -22,13 +22,6 @@ module.exports = (passport) => {
           return done(null, false, { message: '가입되지 않은 회원입니다.' });
         }
 
-        // password가 null인 경우 = 소셜 로그인 계정
-        if (!user.password) {
-          return done(null, false, {
-            message: '소셜 로그인 계정입니다. 해당 로그인 버튼을 이용해주세요.',
-          });
-        }
-
         // 비활성화된 계정
         if (user.state_code === 'inactive') {
           return done(null, false, { message: '비활성화된 계정입니다.' });
