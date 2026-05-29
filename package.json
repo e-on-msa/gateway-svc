@@ -19,8 +19,8 @@
     "express-session": "^1.19.0",
     "helmet": "^8.1.0",
     "http-proxy-middleware": "^2.0.9",
-    "ioredis": "^5.10.1",
     "passport": "^0.7.0",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "redis": "^6.0.0"
   }
 }

@@ -6,18 +6,22 @@ const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
 const { createProxyMiddleware } = require("http-proxy-middleware");
-const RedisStore = require("connect-redis").default;
-const Redis = require("ioredis");
+const { RedisStore } = require("connect-redis");
+const { createClient } = require("redis");
 
 require("./config/passport")(passport);
 
 const app = express();
 
 // ── Redis 클라이언트 설정 ──
-const redisClient = new Redis({
-    host: process.env.REDIS_HOST || "redis",
-    port: parseInt(process.env.REDIS_PORT) || 6379,
+const redisClient = createClient({
+    socket: {
+        host: process.env.REDIS_HOST || "redis",
+        port: parseInt(process.env.REDIS_PORT) || 6379,
+    },
 });
+
+redisClient.connect().catch(console.error);
 
 // ── 보안 헤더 ──
 app.use(helmet());
@@ -58,7 +62,7 @@ app.get("/csrf-token", (req, res) => {
 });
 
 // ── Auth 라우터 (Gateway가 직접 처리) ──
-app.use("/auth", require("./routes/authRouter"));
+app.use("/api/auth", require("./routes/authRouter"));
 
 // ── 프록시 미들웨어 (각 서비스로 라우팅) ──
 const { isLoggedIn } = require("./middleware/auth");
@@ -71,22 +75,22 @@ const injectUser = (req, res, next) => {
     next();
 };
 
-app.use("/schoolSchedule", isLoggedIn, injectUser,
+app.use("/api/schoolSchedule", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
 
-app.use("/averageSchedule", isLoggedIn, injectUser,
+app.use("/api/averageSchedule", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
 
-app.use("/regions", isLoggedIn, injectUser,
+app.use("/api/regions", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
 
-app.use("/mySchool", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
+app.use("/api/mySchool", isLoggedIn, injectUser,
+    createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
 
 app.use("/api/user", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
 
-app.use("/boards", isLoggedIn, injectUser,
+app.use("/api/boards", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.COMMUNITY_SVC_URL || "http://community-svc:8083", changeOrigin: true }));
 
 app.use("/api/challenges", isLoggedIn, injectUser,
