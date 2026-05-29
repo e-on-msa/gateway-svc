@@ -64,7 +64,7 @@ app.get("/csrf-token", (req, res) => {
 // ── Auth 라우터 (Gateway가 직접 처리) ──
 app.use("/api/auth", require("./routes/authRouter"));
 
-// ── 프록시 미들웨어 (각 서비스로 라우팅) ──
+// ── 인증 미들웨어 (각 서비스로 라우팅) ──
 const { isLoggedIn } = require("./middleware/auth");
 
 const injectUser = (req, res, next) => {
@@ -75,33 +75,50 @@ const injectUser = (req, res, next) => {
     next();
 };
 
-app.use("/api/schoolSchedule", isLoggedIn, injectUser,
+// Schedule
+// /me/schedule 만 로그인 필요
+app.use("/api/schoolSchedule/me", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
 
-app.use("/api/averageSchedule", isLoggedIn, injectUser,
+// 나머지 schedule은 공개
+app.use("/api/schoolSchedule", injectUser,
     createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
 
-app.use("/api/regions", isLoggedIn, injectUser,
+app.use("/api/averageSchedule", injectUser,
     createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
 
+app.use("/api/regions", injectUser,
+    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
+
+// User
 app.use("/api/mySchool", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
 
 app.use("/api/user", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
 
-app.use("/api/boards", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.COMMUNITY_SVC_URL || "http://community-svc:8083", changeOrigin: true }));
-
-app.use("/api/challenges", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084", changeOrigin: true }));
-
-app.use("/api/recommendations", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.RECOMMENDATION_SVC_URL || "http://recommendation-svc:8085", changeOrigin: true }));
-
 app.use("/api/preferences", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
 
+// Community
+// 비로그인도 통과, 내부에서 권한 판단
+app.use("/api/boards", injectUser,
+    createProxyMiddleware({ target: process.env.COMMUNITY_SVC_URL || "http://community-svc:8083", changeOrigin: true }));
+
+// Challenge
+app.use("/api/challenges", isLoggedIn, injectUser,
+    createProxyMiddleware({ target: process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084", changeOrigin: true }));
+
+// Recommendation
+// /recommendations/time은 공개
+app.use("/api/recommendations/time", injectUser,
+    createProxyMiddleware({ target: process.env.RECOMMENDATION_SVC_URL || "http://recommendation-svc:8085", changeOrigin: true }));
+
+// 나머지는 로그인 필요
+app.use("/api/recommendations", isLoggedIn, injectUser,
+    createProxyMiddleware({ target: process.env.RECOMMENDATION_SVC_URL || "http://recommendation-svc:8085", changeOrigin: true }));
+
+// AI
 app.use("/api/ai", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.AI_SVC_URL || "http://ai-svc:8086", changeOrigin: true }));
 
