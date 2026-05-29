@@ -99,6 +99,9 @@ app.use("/api/challenges", isLoggedIn, injectUser,
 app.use("/api/recommendations", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.RECOMMENDATION_SVC_URL || "http://recommendation-svc:8085", changeOrigin: true }));
 
+app.use("/api/preferences", isLoggedIn, injectUser,
+    createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
+
 app.use("/api/ai", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.AI_SVC_URL || "http://ai-svc:8086", changeOrigin: true }));
 
