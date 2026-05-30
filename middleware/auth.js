@@ -1,4 +1,8 @@
 exports.isLoggedIn = (req, res, next) => {
+  console.log("===== isLoggedIn =====");
+  console.log("cookie =", req.headers.cookie);
+  console.log("sessionID =", req.sessionID);
+  console.log("user =", req.user);
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: '로그인이 필요합니다.' });
   }

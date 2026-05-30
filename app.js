@@ -54,6 +54,12 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
+// ── Internal API ──
+app.use("/internal", createProxyMiddleware({
+    target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082",
+    changeOrigin: true,
+}));
+
 // ── CSRF ──
 const csrfProtection = csrf();
 app.use(csrfProtection);
@@ -107,16 +113,39 @@ app.use("/api/preferences", isLoggedIn, injectUser,
 
 // Community
 // 비로그인도 통과, 내부에서 권한 판단
-app.use("/api/boards", injectUser,
-    createProxyMiddleware({ target: process.env.COMMUNITY_SVC_URL || "http://community-svc:8083", changeOrigin: true,
-        on: {
-            proxyReq: fixRequestBody,
-        },
-}));
+const myFix = (proxyReq, req, res) => {
+    console.log("fixRequestBody 실행됨");
+    fixRequestBody(proxyReq, req, res);
+};
+
+app.use(
+  "/api/boards",
+  injectUser,
+  createProxyMiddleware({
+    target: process.env.COMMUNITY_SVC_URL || "http://community-svc:8083",
+    changeOrigin: true,
+    onProxyReq: myFix,
+  })
+);
 
 // Challenge
 app.use("/api/challenges", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084", changeOrigin: true }));
+    app.use("/api/reviews", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+ 
+app.use("/api/attachments", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+ 
+app.use("/api/attendances", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+ 
+app.use("/api/participations", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+ 
+// Challenge Admin
+app.use("/api/admin/challenges", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
 
 // Recommendation
 // /recommendations/time은 공개
