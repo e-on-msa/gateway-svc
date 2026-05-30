@@ -24,7 +24,7 @@ exports.signupStep2 = async (req, res, next) => {
 
 exports.sendEmailCode = async (req, res, next) => {
     try {
-        const response = await axios.post(`${USER_SVC_URL}/internal/auth/email`, req.body);
+        const response = await axios.post(`${USER_SVC_URL}/internal/auth/join/email`, req.body);
         res.status(response.status).json(response.data);
     } catch (err) {
         if (err.response) return res.status(err.response.status).json(err.response.data);

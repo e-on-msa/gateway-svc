@@ -69,8 +69,9 @@ const { isLoggedIn } = require("./middleware/auth");
 
 const injectUser = (req, res, next) => {
     if (req.user) {
-        req.headers["x-user-id"] = req.user.user_id;
+        req.headers["x-user-id"] = String(req.user.user_id);
         req.headers["x-user-type"] = req.user.type;
+        req.headers["x-user-state"] = req.user.state_code;
     }
     next();
 };
@@ -93,6 +94,10 @@ app.use("/api/regions", injectUser,
 // User
 app.use("/api/mySchool", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
+
+app.use("/api/admin", isLoggedIn, injectUser,
+    createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true 
+}));
 
 app.use("/api/user", isLoggedIn, injectUser,
     createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
