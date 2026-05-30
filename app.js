@@ -5,7 +5,7 @@ const csrf = require("csurf");
 const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
-const { createProxyMiddleware } = require("http-proxy-middleware");
+const { createProxyMiddleware, fixRequestBody } = require("http-proxy-middleware");
 const { RedisStore } = require("connect-redis");
 const { createClient } = require("redis");
 
@@ -108,7 +108,11 @@ app.use("/api/preferences", isLoggedIn, injectUser,
 // Community
 // 비로그인도 통과, 내부에서 권한 판단
 app.use("/api/boards", injectUser,
-    createProxyMiddleware({ target: process.env.COMMUNITY_SVC_URL || "http://community-svc:8083", changeOrigin: true }));
+    createProxyMiddleware({ target: process.env.COMMUNITY_SVC_URL || "http://community-svc:8083", changeOrigin: true,
+        on: {
+            proxyReq: fixRequestBody,
+        },
+}));
 
 // Challenge
 app.use("/api/challenges", isLoggedIn, injectUser,
