@@ -137,7 +137,7 @@ app.use("/api/boards", injectUser,
     createProxyMiddleware(proxyOptions(process.env.COMMUNITY_SVC_URL || "http://community-svc:8083")));
 
 // Challenge
-app.use("/api/challenges", isLoggedIn, injectUser,
+app.use("/api/challenges", injectUser,
     createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
  
 app.use("/api/reviews", isLoggedIn, injectUser,
@@ -150,6 +150,12 @@ app.use("/api/attendances", isLoggedIn, injectUser,
     createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
  
 app.use("/api/participations", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+
+app.use("/api/visions", injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+
+app.use("/api/interests", injectUser,
     createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
  
 // Challenge Admin
