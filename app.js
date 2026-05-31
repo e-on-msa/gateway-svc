@@ -70,6 +70,7 @@ const proxyOptions = (target) => ({
 // user-svc internal
 app.use("/internal/preferences", createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
 app.use("/internal/users", createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+app.use("/internal/auth", createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
  
 // challenge-svc internal
 app.use("/internal/challenges", createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
@@ -129,6 +130,10 @@ app.use("/api/user", isLoggedIn, injectUser,
     createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
  
 app.use("/api/preferences", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+
+// User Admin
+app.use("/api/admin/ban", isLoggedIn, injectUser,
     createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
 
 // Community

@@ -119,7 +119,12 @@ exports.login = (req, res, next) => {
         if (!user) return res.status(401).json({ message: info?.message || '로그인 실패' });
         req.logIn(user, (err) => {
             if (err) return next(err);
-            res.json({ success: true, user });
+            // 새 CSRF 토큰 응답에 포함
+            res.json({ 
+                success: true, 
+                user,
+                csrfToken: req.csrfToken()  // 새 토큰 발급
+            });
         });
     })(req, res, next);
 };
