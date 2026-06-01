@@ -54,6 +54,14 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
+// ── 헬스체크 ──
+app.get("/", (req, res) => {
+    res.status(200).json({ service: "gateway-svc", status: "ok" });
+});
+app.get("/health", (req, res) => {
+    res.status(200).json({ service: "gateway-svc", status: "ok" });
+});
+
 // ── fixRequestBody 래퍼 ──
 const onProxyReq = (proxyReq, req, res) => {
     fixRequestBody(proxyReq, req, res);
@@ -130,6 +138,9 @@ app.use("/api/user", isLoggedIn, injectUser,
     createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
  
 app.use("/api/preferences", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+
+app.use("/api/select", isLoggedIn, injectUser, 
     createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
 
 // User Admin
