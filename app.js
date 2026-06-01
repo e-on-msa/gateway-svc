@@ -5,7 +5,7 @@ const csrf = require("csurf");
 const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
-const { createProxyMiddleware } = require("http-proxy-middleware");
+const { createProxyMiddleware, fixRequestBody } = require("http-proxy-middleware");
 const { RedisStore } = require("connect-redis");
 const { createClient } = require("redis");
 
@@ -54,6 +54,46 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
+// ── 헬스체크 ──
+app.get("/", (req, res) => {
+    res.status(200).json({ service: "gateway-svc", status: "ok" });
+});
+app.get("/health", (req, res) => {
+    res.status(200).json({ service: "gateway-svc", status: "ok" });
+});
+
+// ── fixRequestBody 래퍼 ──
+const onProxyReq = (proxyReq, req, res) => {
+    fixRequestBody(proxyReq, req, res);
+};
+ 
+// ── proxy 옵션 헬퍼 ──
+const proxyOptions = (target) => ({
+    target,
+    changeOrigin: true,
+    onProxyReq,
+});
+
+// ── Internal API ──
+// user-svc internal
+app.use("/internal/preferences", createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+app.use("/internal/users", createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+app.use("/internal/auth", createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+ 
+// challenge-svc internal
+app.use("/internal/challenges", createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+app.use("/internal/participations", createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+ 
+// community-svc internal
+app.use("/internal/activities", createProxyMiddleware(proxyOptions(process.env.COMMUNITY_SVC_URL || "http://community-svc:8083")));
+ 
+// recommendation-svc internal
+app.use("/internal/recommend", createProxyMiddleware(proxyOptions(process.env.RECOMMENDATION_SVC_URL || "http://recommendation-svc:8085")));
+ 
+// schedule-svc internal (나머지 전부 포함으로)
+app.use("/internal", createProxyMiddleware(proxyOptions(process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082")));
+
+
 // ── CSRF ──
 const csrfProtection = csrf();
 app.use(csrfProtection);
@@ -69,8 +109,9 @@ const { isLoggedIn } = require("./middleware/auth");
 
 const injectUser = (req, res, next) => {
     if (req.user) {
-        req.headers["x-user-id"] = req.user.user_id;
+        req.headers["x-user-id"] = String(req.user.user_id);
         req.headers["x-user-type"] = req.user.type;
+        req.headers["x-user-state"] = req.user.state_code;
     }
     next();
 };
@@ -78,49 +119,76 @@ const injectUser = (req, res, next) => {
 // Schedule
 // /me/schedule 만 로그인 필요
 app.use("/api/schoolSchedule/me", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
-
-// 나머지 schedule은 공개
+    createProxyMiddleware(proxyOptions(process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082")));
+ 
 app.use("/api/schoolSchedule", injectUser,
-    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
-
+    createProxyMiddleware(proxyOptions(process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082")));
+ 
 app.use("/api/averageSchedule", injectUser,
-    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
-
+    createProxyMiddleware(proxyOptions(process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082")));
+ 
 app.use("/api/regions", injectUser,
-    createProxyMiddleware({ target: process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082", changeOrigin: true }));
+    createProxyMiddleware(proxyOptions(process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082")));
 
 // User
 app.use("/api/mySchool", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
-
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+ 
 app.use("/api/user", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
-
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+ 
 app.use("/api/preferences", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.USER_SVC_URL || "http://user-svc:8081", changeOrigin: true }));
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+
+app.use("/api/select", isLoggedIn, injectUser, 
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+
+// User Admin
+app.use("/api/admin/ban", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
 
 // Community
 // 비로그인도 통과, 내부에서 권한 판단
 app.use("/api/boards", injectUser,
-    createProxyMiddleware({ target: process.env.COMMUNITY_SVC_URL || "http://community-svc:8083", changeOrigin: true }));
+    createProxyMiddleware(proxyOptions(process.env.COMMUNITY_SVC_URL || "http://community-svc:8083")));
 
 // Challenge
-app.use("/api/challenges", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084", changeOrigin: true }));
+app.use("/api/challenges", injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+ 
+app.use("/api/reviews", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+ 
+app.use("/api/attachments", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+ 
+app.use("/api/attendances", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+ 
+app.use("/api/participations", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+
+app.use("/api/visions", injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+
+app.use("/api/interests", injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+ 
+// Challenge Admin
+app.use("/api/admin/challenges", isLoggedIn, injectUser,
+    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
 
 // Recommendation
 // /recommendations/time은 공개
 app.use("/api/recommendations/time", injectUser,
-    createProxyMiddleware({ target: process.env.RECOMMENDATION_SVC_URL || "http://recommendation-svc:8085", changeOrigin: true }));
-
-// 나머지는 로그인 필요
+    createProxyMiddleware(proxyOptions(process.env.RECOMMENDATION_SVC_URL || "http://recommendation-svc:8085")));
+ 
 app.use("/api/recommendations", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.RECOMMENDATION_SVC_URL || "http://recommendation-svc:8085", changeOrigin: true }));
+    createProxyMiddleware(proxyOptions(process.env.RECOMMENDATION_SVC_URL || "http://recommendation-svc:8085")));
 
 // AI
 app.use("/api/ai", isLoggedIn, injectUser,
-    createProxyMiddleware({ target: process.env.AI_SVC_URL || "http://ai-svc:8086", changeOrigin: true }));
+    createProxyMiddleware(proxyOptions(process.env.AI_SVC_URL || "http://ai-svc:8086")));
 
 // ── 에러 핸들러 ──
 app.use((err, req, res, next) => {

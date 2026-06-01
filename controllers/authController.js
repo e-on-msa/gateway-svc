@@ -24,7 +24,7 @@ exports.signupStep2 = async (req, res, next) => {
 
 exports.sendEmailCode = async (req, res, next) => {
     try {
-        const response = await axios.post(`${USER_SVC_URL}/internal/auth/email`, req.body);
+        const response = await axios.post(`${USER_SVC_URL}/internal/auth/join/email`, req.body);
         res.status(response.status).json(response.data);
     } catch (err) {
         if (err.response) return res.status(err.response.status).json(err.response.data);
@@ -119,7 +119,12 @@ exports.login = (req, res, next) => {
         if (!user) return res.status(401).json({ message: info?.message || '로그인 실패' });
         req.logIn(user, (err) => {
             if (err) return next(err);
-            res.json({ success: true, user });
+            // 새 CSRF 토큰 응답에 포함
+            res.json({ 
+                success: true, 
+                user,
+                csrfToken: req.csrfToken()  // 새 토큰 발급
+            });
         });
     })(req, res, next);
 };
