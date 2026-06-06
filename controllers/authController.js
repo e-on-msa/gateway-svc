@@ -5,6 +5,12 @@ const USER_SVC_URL = process.env.USER_SVC_URL || 'http://user-svc:8081';
 exports.signupStep1 = async (req, res, next) => {
     try {
         const response = await axios.post(`${USER_SVC_URL}/internal/auth/join/step1`, req.body);
+        // step1 결과를 Gateway 세션에 저장
+        req.session.signup = { 
+            ...req.session.signup,
+            step1: response.data,
+            userType: req.body.userType
+        };
         res.status(response.status).json(response.data);
     } catch (err) {
         if (err.response) return res.status(err.response.status).json(err.response.data);
@@ -14,7 +20,16 @@ exports.signupStep1 = async (req, res, next) => {
 
 exports.signupStep2 = async (req, res, next) => {
     try {
-        const response = await axios.post(`${USER_SVC_URL}/internal/auth/join/step2`, req.body);
+        const response = await axios.post(`${USER_SVC_URL}/internal/auth/join/step2`, 
+            { 
+                ...req.body, 
+                sessionData: req.session.signup  // 세션 정보 포함
+            }
+        );
+        req.session.signup = {
+            ...req.session.signup,
+            step2: response.data
+        };
         res.status(response.status).json(response.data);
     } catch (err) {
         if (err.response) return res.status(err.response.status).json(err.response.data);

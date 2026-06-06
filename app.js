@@ -21,7 +21,7 @@ const redisClient = createClient({
     },
 });
 
-redisClient.connect().catch(console.error);
+// redisClient.connect().catch(console.error);
 
 // ── 보안 헤더 ──
 app.use(helmet());
@@ -203,4 +203,4 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: "Internal Server Error" });
 });
 
-module.exports = app;
+module.exports = { app, redisClient };
