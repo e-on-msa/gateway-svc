@@ -173,6 +173,9 @@ app.use("/api/visions", injectUser,
 
 app.use("/api/interests", injectUser,
     createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
+    
+app.use("/uploads", createProxyMiddleware(
+    proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
  
 // Challenge Admin
 app.use("/api/admin/challenges", isLoggedIn, injectUser,
