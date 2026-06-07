@@ -59,7 +59,13 @@ exports.verifyEmailCode = async (req, res, next) => {
 
 exports.signupStep3 = async (req, res, next) => {
     try {
-        const response = await axios.post(`${USER_SVC_URL}/internal/auth/join/step3`, req.body);
+        const response = await axios.post(
+            `${USER_SVC_URL}/internal/auth/join/step3`,
+            {
+                ...req.body,
+                sessionData: req.session.signup  // ← 추가
+            }
+        );
         res.status(response.status).json(response.data);
     } catch (err) {
         if (err.response) return res.status(err.response.status).json(err.response.data);

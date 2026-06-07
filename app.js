@@ -93,6 +93,8 @@ app.use("/internal/recommend", createProxyMiddleware(proxyOptions(process.env.RE
 // schedule-svc internal (나머지 전부 포함으로)
 app.use("/internal", createProxyMiddleware(proxyOptions(process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082")));
 
+app.use("/uploads", createProxyMiddleware(
+    proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
 
 // ── CSRF ──
 const csrfProtection = csrf();
@@ -173,9 +175,6 @@ app.use("/api/visions", injectUser,
 
 app.use("/api/interests", injectUser,
     createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
-    
-app.use("/uploads", createProxyMiddleware(
-    proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
  
 // Challenge Admin
 app.use("/api/admin/challenges", isLoggedIn, injectUser,
