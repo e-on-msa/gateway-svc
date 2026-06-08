@@ -21,7 +21,7 @@ const redisClient = createClient({
     },
 });
 
-redisClient.connect().catch(console.error);
+// redisClient.connect().catch(console.error);
 
 // ── 보안 헤더 ──
 app.use(helmet());
@@ -93,6 +93,8 @@ app.use("/internal/recommend", createProxyMiddleware(proxyOptions(process.env.RE
 // schedule-svc internal (나머지 전부 포함으로)
 app.use("/internal", createProxyMiddleware(proxyOptions(process.env.SCHEDULE_SVC_URL || "http://schedule-svc:8082")));
 
+app.use("/uploads", createProxyMiddleware(
+    proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
 
 // ── CSRF ──
 const csrfProtection = csrf();
@@ -143,6 +145,12 @@ app.use("/api/preferences", isLoggedIn, injectUser,
 app.use("/api/select", isLoggedIn, injectUser, 
     createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
 
+app.use("/api/visions", injectUser,
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+
+app.use("/api/interests", injectUser,
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+
 // User Admin
 app.use("/api/admin/ban", isLoggedIn, injectUser,
     createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
@@ -168,12 +176,6 @@ app.use("/api/attendances", isLoggedIn, injectUser,
 app.use("/api/participations", isLoggedIn, injectUser,
     createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
 
-app.use("/api/visions", injectUser,
-    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
-
-app.use("/api/interests", injectUser,
-    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
- 
 // Challenge Admin
 app.use("/api/admin/challenges", isLoggedIn, injectUser,
     createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
@@ -203,4 +205,4 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: "Internal Server Error" });
 });
 
-module.exports = app;
+module.exports = { app, redisClient };
