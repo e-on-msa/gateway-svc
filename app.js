@@ -145,6 +145,12 @@ app.use("/api/preferences", isLoggedIn, injectUser,
 app.use("/api/select", isLoggedIn, injectUser, 
     createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
 
+app.use("/api/visions", injectUser,
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+
+app.use("/api/interests", injectUser,
+    createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
+
 // User Admin
 app.use("/api/admin/ban", isLoggedIn, injectUser,
     createProxyMiddleware(proxyOptions(process.env.USER_SVC_URL || "http://user-svc:8081")));
@@ -170,12 +176,6 @@ app.use("/api/attendances", isLoggedIn, injectUser,
 app.use("/api/participations", isLoggedIn, injectUser,
     createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
 
-app.use("/api/visions", injectUser,
-    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
-
-app.use("/api/interests", injectUser,
-    createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
- 
 // Challenge Admin
 app.use("/api/admin/challenges", isLoggedIn, injectUser,
     createProxyMiddleware(proxyOptions(process.env.CHALLENGE_SVC_URL || "http://challenge-svc:8084")));
